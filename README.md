@@ -18,11 +18,11 @@ echo '“Café → voilà!”' | ./normalize.cs | tee output.txt
 
 ### Options
 
-- `--collapseWhitespace`: Collapse runs of whitespace to single spaces
+- `--collapse-whitespace`: Collapse runs of whitespace to single spaces
 - `--trim`: Trim leading/trailing whitespace
 
 Example:
 ```bash
-echo '  Hello   world  ' | ./normalize.cs --trim --collapseWhitespace
+echo '  Hello   world  ' | ./normalize.cs --trim --collapse-whitespace
 Hello world
 ```
