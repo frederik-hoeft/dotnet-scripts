@@ -1,2 +1,28 @@
 # dotnet-scripts
-A collection of .NET-based command line utilities
+
+A collection of .NET-based command-line utilities implemented as single-file C# scripts.
+
+## normalize
+
+Converts text to ASCII by substituting Unicode characters (smart quotes, em-dashes, arrows, etc.) and stripping accents and combining marks.
+
+Requires .NET 10 or later.
+
+### Usage
+
+```bash
+chmod +x normalize.cs
+echo '“Café → voilà!”' | ./normalize.cs | tee output.txt
+"Cafe -> voila!"
+```
+
+### Options
+
+- `--collapseWhitespace`: Collapse runs of whitespace to single spaces
+- `--trim`: Trim leading/trailing whitespace
+
+Example:
+```bash
+echo '  Hello   world  ' | ./normalize.cs --trim --collapseWhitespace
+Hello world
+```
