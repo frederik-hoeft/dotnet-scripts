@@ -4,7 +4,7 @@ A collection of .NET-based command-line utilities implemented as single-file C# 
 
 ## buffered-write
 
-Buffers stdin and writes it atomically to a temporary file and atomically renames it to the target, with retry logic for locked files.
+Buffers stdin and writes it to a temporary file and atomically renames it to the target, with retry logic for locked files.
 If no output file is specified, writes to stdout.
 
 Great for in-place file edits in pipelines, since the final write only occurs once all prior processing is complete (and previous streams are closed).
