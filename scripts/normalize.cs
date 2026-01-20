@@ -1,5 +1,8 @@
 #!/usr/bin/env dotnet
 #:property TargetFramework=net10.0
+#:property PublishAot=true
+#:property PublishTrimmed=true
+#:property OptimizationPreference=speed
 #:package ConsoleAppFramework@5.7.13
 
 using System.Globalization;
