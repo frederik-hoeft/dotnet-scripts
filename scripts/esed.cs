@@ -7,8 +7,13 @@
 #:package ConsoleAppFramework@5.7.13
 
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using System.Text.RegularExpressions;
 using ConsoleAppFramework;
+
+// Force UTF-8 for redirected stdin/stdout (pipes/files)
+Console.InputEncoding = Encoding.UTF8;
+Console.OutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
 
 var app = ConsoleApp.Create();
 app.Add<Commands>();
@@ -21,31 +26,46 @@ internal sealed class Commands
     /// </summary>
     /// <param name="inplace">-i|--inplace: Edit files in place</param>
     /// <param name="regex">The sed script in the form: s/regex/replacement/</param>
-    /// <param name="inputFileName">-f|--file</param>
+    /// <param name="inputFileName">-f|--file: The input file name, if not specified, reads from standard input</param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     [Command("")]
-    public async Task ExecuteAsync([Argument][StringSyntax(StringSyntaxAttribute.Regex)] string regex, [Argument] string inputFileName, [HideDefaultValue] bool inplace = false, CancellationToken cancellationToken = default)
+    public async Task ExecuteAsync([Argument][StringSyntax(StringSyntaxAttribute.Regex)] string regex, [Argument] string? inputFileName = null, [HideDefaultValue] bool inplace = false, CancellationToken cancellationToken = default)
     {
-        FileInfo fileInfo = new(inputFileName);
-        if (!fileInfo.Exists)
-        {
-            await Console.Error.WriteLineAsync($"File not found: {inputFileName}");
-            return;
-        }
         SedProcessor processor = new(regex);
-        string content = await File.ReadAllTextAsync(fileInfo.FullName, cancellationToken);
+        string content = inputFileName switch
+        {
+            null => await ReadStdinAsync(cancellationToken),
+            _ => await ReadFileAsync(inputFileName, cancellationToken)
+        };
         string result = processor.Process(content);
         if (inplace)
         {
+            if (inputFileName is null)
+            {
+                throw new ArgumentException("In-place editing requires an input file name.", nameof(inputFileName));
+            }
             string tempFileName = $"{Guid.CreateVersion7()}.tmp";
             await File.WriteAllTextAsync(tempFileName, result, cancellationToken);
-            File.Replace(tempFileName, fileInfo.FullName, destinationBackupFileName: null, ignoreMetadataErrors: true);
+            File.Replace(tempFileName, inputFileName, destinationBackupFileName: null, ignoreMetadataErrors: true);
         }
         else
         {
             await Console.Out.WriteLineAsync(result);
         }
+    }
+
+    private static async Task<string> ReadFileAsync(string fileName, CancellationToken cancellationToken)
+    {
+        using FileStream fs = File.OpenRead(fileName);
+        using StreamReader reader = new(fs, Encoding.UTF8);
+        return await reader.ReadToEndAsync(cancellationToken);
+    }
+
+    private static async Task<string> ReadStdinAsync(CancellationToken cancellationToken)
+    {
+        using StreamReader reader = new(Console.OpenStandardInput(), Encoding.UTF8);
+        return await reader.ReadToEndAsync(cancellationToken);
     }
 }
 
