@@ -2,6 +2,38 @@
 
 A collection of .NET-based command-line utilities implemented as single-file C# scripts.
 
+## buffered-write
+
+Buffers stdin and writes it atomically to a temporary file and atomically renames it to the target, with retry logic for locked files.
+If no output file is specified, writes to stdout.
+
+Great for in-place file edits in pipelines, since the final write only occurs once all prior processing is complete (and previous streams are closed).
+
+Requires .NET 10 or later.
+
+### Usage
+
+```bash
+chmod +x buffered-write.cs
+cat input.txt | ./buffered-write.cs output.txt
+```
+
+### Options
+
+- `-f|--file`: Output file (if omitted, writes to stdout)
+
+### Examples
+
+Atomic file write:
+```bash
+echo "data" | ./buffered-write.cs config.json
+```
+
+Pipelined in-place edit:
+```bash
+cat data.txt | ./normalize.cs | ./buffered-write.cs data.txt
+```
+
 ## esed
 
 A sed-like text processor with full .NET regex support, enabling advanced features like lookaheads, lookbehinds, named groups, and Unicode categories.
