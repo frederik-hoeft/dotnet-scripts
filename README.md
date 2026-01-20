@@ -1,6 +1,6 @@
 # dotnet-scripts
 
-A collection of .NET-based command-line utilities implemented as single-file C# scripts.
+A collection of .NET-based command-line utilities implemented as single-file C# scripts. Requires .NET 10 or later.
 
 ## buffered-write
 
@@ -8,8 +8,6 @@ Buffers stdin and writes it to a temporary file and atomically renames it to the
 If no output file is specified, writes to stdout.
 
 Great for in-place file edits in pipelines, since the final write only occurs once all prior processing is complete (and previous streams are closed).
-
-Requires .NET 10 or later.
 
 ### Usage
 
@@ -37,8 +35,6 @@ cat data.txt | ./normalize.cs | ./buffered-write.cs data.txt
 ## esed
 
 A sed-like text processor with full .NET regex support, enabling advanced features like lookaheads, lookbehinds, named groups, and Unicode categories.
-
-Requires .NET 10 or later.
 
 ### Usage
 
@@ -77,8 +73,6 @@ hello universe
 ## normalize
 
 Converts text to ASCII by substituting Unicode characters (smart quotes, em-dashes, arrows, etc.) and stripping accents and combining marks.
-
-Requires .NET 10 or later.
 
 ### Usage
 
