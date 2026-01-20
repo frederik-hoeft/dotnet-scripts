@@ -68,6 +68,12 @@ Advanced regex (lookbehind):
 ./esed.cs 's/(?<=@)\w+/example/' emails.txt
 ```
 
+Stream from stdin:
+```bash
+echo 'hello world' | ./esed.cs 's/world/universe/'
+hello universe
+```
+
 ## normalize
 
 Converts text to ASCII by substituting Unicode characters (smart quotes, em-dashes, arrows, etc.) and stripping accents and combining marks.
