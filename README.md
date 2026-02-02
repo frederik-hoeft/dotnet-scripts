@@ -32,17 +32,17 @@ Pipelined in-place edit:
 cat data.txt | ./normalize.cs | ./buffered-write.cs data.txt
 ```
 
-## clip
+## eclip
 
 Manage clipboard text on Windows/Linux.
 
 ### Usage
 
 ```bash
-chmod +x clip.cs
-./clip.cs get                    # Output clipboard to stdout
-echo 'text' | ./clip.cs set      # Set clipboard from stdin
-./clip.cs set 'direct value'     # Set clipboard to literal text
+chmod +x eclip.cs
+./eclip.cs get                    # Output clipboard to stdout
+echo 'text' | ./eclip.cs set      # Set clipboard from stdin
+./eclip.cs set 'direct value'     # Set clipboard to literal text
 ```
 
 ### Commands
@@ -54,12 +54,12 @@ echo 'text' | ./clip.cs set      # Set clipboard from stdin
 
 Pipe clipboard to a file:
 ```bash
-./clip.cs get > clipboard.txt
+./eclip.cs get > clipboard.txt
 ```
 
 Copy file to clipboard:
 ```bash
-cat file.txt | ./clip.cs set
+cat file.txt | ./eclip.cs set
 ```
 
 ## esed
