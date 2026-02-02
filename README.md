@@ -32,6 +32,36 @@ Pipelined in-place edit:
 cat data.txt | ./normalize.cs | ./buffered-write.cs data.txt
 ```
 
+## clip
+
+Manage clipboard text on Windows/Linux.
+
+### Usage
+
+```bash
+chmod +x clip.cs
+./clip.cs get                    # Output clipboard to stdout
+echo 'text' | ./clip.cs set      # Set clipboard from stdin
+./clip.cs set 'direct value'     # Set clipboard to literal text
+```
+
+### Commands
+
+- `get`: Output clipboard text to stdout
+- `set [value]`: Set clipboard text (from argument or stdin if omitted)
+
+### Examples
+
+Pipe clipboard to a file:
+```bash
+./clip.cs get > clipboard.txt
+```
+
+Copy file to clipboard:
+```bash
+cat file.txt | ./clip.cs set
+```
+
 ## esed
 
 A sed-like text processor with full .NET regex support, enabling advanced features like lookaheads, lookbehinds, named groups, and Unicode categories.
