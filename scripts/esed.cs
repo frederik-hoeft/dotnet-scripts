@@ -27,12 +27,13 @@ internal sealed class Commands
     /// <param name="inplace">-i|--inplace: Edit files in place</param>
     /// <param name="regex">The sed script in the form: s/regex/replacement/</param>
     /// <param name="inputFileName">-f|--file: The input file name, if not specified, reads from standard input</param>
+    /// <param name="literalReplacement">Treat escape sequences literally when true, otherwise unescape common sequences</param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     [Command("")]
-    public Task ImplicitAsync([Argument][StringSyntax(StringSyntaxAttribute.Regex)] string regex, [Argument] string? inputFileName = null, [HideDefaultValue] bool inplace = false, CancellationToken cancellationToken = default)
+    public Task ImplicitAsync([Argument][StringSyntax(StringSyntaxAttribute.Regex)] string regex, [Argument] string? inputFileName = null, [HideDefaultValue] bool inplace = false, [HideDefaultValue] bool literalReplacement = false, CancellationToken cancellationToken = default)
     {
-        ScriptedSedProcessor processor = new(regex);
+        ScriptedSedProcessor processor = new(regex, literalReplacement);
         return ExecuteCoreAsync(processor, inputFileName, inplace, cancellationToken);
     }
 
@@ -40,14 +41,15 @@ internal sealed class Commands
     /// A sed-like processor that treats the regex and replacement as literal strings, escaping any special characters.
     /// </summary>
     /// <param name="regex">The regex pattern to search for (treated as a literal string)</param>
-    /// <param name="replacement">The replacement string (treated as a literal string)</param
+    /// <param name="replacement">The replacement string (treated as a literal string)</param>
     /// <param name="inputFileName">-f|--file: The input file name, if not specified, reads from standard input</param>
     /// <param name="inplace">-i|--inplace: Edit files in place</param>
+    /// <param name="literalReplacement">Treat escape sequences literally when true, otherwise unescape common sequences</param>
     /// <param name="cancellationToken"></param>
     [Command("explicit")]
-    public Task ExplicitAsync([Argument][StringSyntax(StringSyntaxAttribute.Regex)] string regex, [Argument][StringSyntax(StringSyntaxAttribute.Regex)] string replacement, [Argument] string? inputFileName = null, [HideDefaultValue] bool inplace = false, CancellationToken cancellationToken = default)
+    public Task ExplicitAsync([Argument][StringSyntax(StringSyntaxAttribute.Regex)] string regex, [Argument][StringSyntax(StringSyntaxAttribute.Regex)] string replacement, [Argument] string? inputFileName = null, [HideDefaultValue] bool inplace = false, [HideDefaultValue] bool literalReplacement = false, CancellationToken cancellationToken = default)
     {
-        SedProcessor processor = new(regex, replacement);
+        SedProcessor processor = new(regex, replacement, literalReplacement);
         return ExecuteCoreAsync(processor, inputFileName, inplace, cancellationToken);
     }
 
@@ -94,7 +96,76 @@ internal interface ISedProcessor
     string Process(string content);
 }
 
-internal sealed partial class ScriptedSedProcessor : ISedProcessor
+internal abstract class SedProcessorBase(bool literalReplacement) : ISedProcessor
+{
+    private readonly bool _literalReplacement = literalReplacement;
+
+    public abstract string Process(string content);
+
+    protected string NormalizeEscapes(string value) => _literalReplacement ? value : UnescapeCommonEscapes(value);
+
+    private static string UnescapeCommonEscapes(string value)
+    {
+        StringBuilder builder = new(value.Length);
+        for (int i = 0; i < value.Length; i++)
+        {
+            char current = value[i];
+            if (current != '\\' || i == value.Length - 1)
+            {
+                builder.Append(current);
+                continue;
+            }
+
+            char next = value[i + 1];
+            switch (next)
+            {
+                case '\\':
+                    builder.Append('\\');
+                    i++;
+                    break;
+                case 'n':
+                    builder.Append('\n');
+                    i++;
+                    break;
+                case 'r':
+                    builder.Append('\r');
+                    i++;
+                    break;
+                case 't':
+                    builder.Append('\t');
+                    i++;
+                    break;
+                case '0':
+                    builder.Append('\0');
+                    i++;
+                    break;
+                case 'f':
+                    builder.Append('\f');
+                    i++;
+                    break;
+                case 'v':
+                    builder.Append('\v');
+                    i++;
+                    break;
+                case 'a':
+                    builder.Append('\a');
+                    i++;
+                    break;
+                case 'b':
+                    builder.Append('\b');
+                    i++;
+                    break;
+                default:
+                    builder.Append('\\');
+                    break;
+            }
+        }
+
+        return builder.ToString();
+    }
+}
+
+internal sealed partial class ScriptedSedProcessor : SedProcessorBase
 {
     private readonly string _regex;
     private readonly string _replacement;
@@ -102,7 +173,7 @@ internal sealed partial class ScriptedSedProcessor : ISedProcessor
     [GeneratedRegex(@"^s(?<sep>.)(?<regex>.*?(?:(?<=[^\\])(?:\\\\)*))\k<sep>(?<replacement>.*?)\k<sep>$")]
     private static partial Regex ScriptRegex { get; }
 
-    public ScriptedSedProcessor(string script)
+    public ScriptedSedProcessor(string script, bool literalReplacement) : base(literalReplacement)
     {
         Match match = ScriptRegex.Match(script);
         if (!match.Success)
@@ -110,15 +181,24 @@ internal sealed partial class ScriptedSedProcessor : ISedProcessor
             throw new ArgumentException("Invalid sed script format.", nameof(script));
         }
         _regex = match.Groups["regex"].Value;
-        _replacement = match.Groups["replacement"].Value;
+        _replacement = NormalizeEscapes(match.Groups["replacement"].Value);
     }
 
-    public string Process(string content) => 
+    public override string Process(string content) =>
         Regex.Replace(content, _regex, _replacement, RegexOptions.Multiline | RegexOptions.CultureInvariant);
 }
 
-internal sealed class SedProcessor(string regex, string replacement) : ISedProcessor
+internal sealed class SedProcessor : SedProcessorBase
 {
-    public string Process(string content) =>
-        Regex.Replace(content, regex, replacement, RegexOptions.Multiline | RegexOptions.CultureInvariant);
+    private readonly string _regex;
+    private readonly string _replacement;
+
+    public SedProcessor(string regex, string replacement, bool literalReplacement) : base(literalReplacement)
+    {
+        _regex = regex;
+        _replacement = NormalizeEscapes(replacement);
+    }
+
+    public override string Process(string content) =>
+        Regex.Replace(content, _regex, _replacement, RegexOptions.Multiline | RegexOptions.CultureInvariant);
 }
