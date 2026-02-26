@@ -122,3 +122,45 @@ Example:
 echo '  Hello   world  ' | ./normalize.cs --trim --collapse-whitespace
 Hello world
 ```
+
+## watch
+
+A port of the Unix `watch` utility. Executes a command periodically and displays the output fullscreen, allowing you to observe changes over time.
+
+### Usage
+
+```bash
+chmod +x watch.cs
+./watch.cs "ls -la"
+./watch.cs -n 5 "df -h"
+```
+
+### Options
+
+- `-n|--interval`: Seconds between updates (default: 2)
+- `-d|--differences`: Highlight differences between successive updates
+- `--cumulative`: Make highlighting sticky, showing all positions that have ever changed
+- `-t|--no-title`: Turn off the header showing interval, command, and current time
+- `-s|--shell`: Shell to use for executing commands (defaults to `$SHELL` or system default)
+
+### Examples
+
+Watch directory contents every 2 seconds:
+```bash
+./watch.cs "dir"
+```
+
+Monitor processes with difference highlighting:
+```bash
+./watch.cs -d "tasklist | findstr chrome"
+```
+
+Use a specific shell:
+```bash
+./watch.cs -s pwsh "Get-Process | Select-Object -First 10"
+```
+
+Cumulative highlighting without header:
+```bash
+./watch.cs -d --cumulative -t "netstat -an"
+```
