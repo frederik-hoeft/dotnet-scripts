@@ -8,7 +8,6 @@ A collection of .NET-based command-line utilities implemented as single-file C# 
 bash ./install.sh <install-directory>
 bash ./install.sh --compile <install-directory>
 bash ./install.sh --dockerized <install-directory> # implies --compile
-bash ./install.sh --compile --dockerized <install-directory>
 ```
 
 ## buffered-write
