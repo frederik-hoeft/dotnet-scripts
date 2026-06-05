@@ -2,6 +2,15 @@
 
 A collection of .NET-based command-line utilities implemented as single-file C# scripts. Requires .NET 10 or later.
 
+## Installation
+
+```bash
+bash ./install.sh <install-directory>
+bash ./install.sh --compile <install-directory>
+bash ./install.sh --dockerized <install-directory>
+bash ./install.sh --compile --dockerized <install-directory>
+```
+
 ## buffered-write
 
 Buffers stdin and writes it to a temporary file and atomically renames it to the target, with retry logic for locked files.
