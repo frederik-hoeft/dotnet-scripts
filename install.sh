@@ -14,6 +14,7 @@ install_dir=''
 usage() {
     echo "Usage: $0 [--compile] [--dockerized] <install-directory>"
     echo "Default behavior (no --compile): installs executable .cs scripts without precompilation."
+    echo "--dockerized: runs the install/build inside Docker and exports artifacts to the install directory."
 }
 
 for arg in "$@"; do
@@ -65,7 +66,7 @@ if [[ "$dockerized" == "true" ]]; then
     /usr/bin/docker build \
         --file "$script_dir/Dockerfile" \
         --target artifacts \
-        --build-arg "COMPILE=$compile" \
+        --build-arg COMPILE=$compile \
         --output "type=local,dest=$install_dir" \
         "$script_dir"
     echo "Dockerized build completed and artifacts exported to '${install_dir}'"
