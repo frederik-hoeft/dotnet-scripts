@@ -13,6 +13,7 @@ install_dir=''
 
 usage() {
     echo "Usage: $0 [--compile] [--dockerized] <install-directory>"
+    echo "Default behavior (no --compile): installs executable .cs scripts without precompilation."
 }
 
 for arg in "$@"; do
