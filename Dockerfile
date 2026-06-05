@@ -9,14 +9,8 @@ WORKDIR /workspace
 COPY install.sh /workspace/install.sh
 COPY scripts /workspace/scripts
 
-ARG COMPILE=false
-
 RUN mkdir -p /out \
-    && if [ "$COMPILE" = "true" ]; then \
-        bash /workspace/install.sh --compile /out; \
-    else \
-        bash /workspace/install.sh /out; \
-    fi
+    && bash /workspace/install.sh --compile /out
 
 FROM scratch AS artifacts
 
