@@ -6,28 +6,80 @@
 # sane bash behavior
 set -euo pipefail
 
-# optional --compile flag to precompile scripts
-compile_flag="${1:-}"
+# optional flags
+compile=false
+dockerized=false
+install_dir=''
+
+usage() {
+    echo "Usage: $0 [--compile] [--dockerized] <install-directory>"
+    echo "Default behavior (no --compile): installs the scripts (removing the .cs extension) without precompilation."
+    echo "--dockerized: runs the build inside Docker, implies --compile, and exports artifacts to the install directory."
+}
+
+for arg in "$@"; do
+    case "$arg" in
+        --compile)
+            compile=true
+            ;;
+        --dockerized)
+            dockerized=true
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        --*)
+            echo "Error: Unknown option '$arg'"
+            usage
+            exit 1
+            ;;
+        *)
+            if [[ -z "$install_dir" ]]; then
+                install_dir="$arg"
+            else
+                echo "Error: Unexpected argument '$arg'"
+                usage
+                exit 1
+            fi
+            ;;
+    esac
+done
 
 # get safe absolute path of the current script directory
 script_dir="$(/usr/bin/realpath "$(/usr/bin/dirname "${BASH_SOURCE[0]}")")"
-install_dir=''
-if [[ "$compile_flag" == "--compile" ]]; then
-    install_dir="${2:-}"
-else
-    install_dir="${1:-}"
-fi
 if [[ -z "$install_dir" ]]; then
-    echo "Usage: $0 <install-directory>"
+    usage
     exit 1
 fi
 if [[ ! -d "$install_dir" ]]; then
     echo "Error: Install directory '$install_dir' does not exist."
     exit 1
 fi
+
+if [[ "$dockerized" == "true" ]]; then
+    if [[ "$compile" != "true" ]]; then
+        echo "Info: --dockerized implies --compile; enabling compilation."
+        compile=true
+    fi
+
+    if ! command -v docker >/dev/null 2>&1; then
+        echo "Error: docker is required for --dockerized builds."
+        exit 1
+    fi
+
+    docker build \
+        --file "$script_dir/Dockerfile" \
+        --target artifacts \
+        --output "type=local,dest=$install_dir" \
+        "$script_dir"
+    echo "Dockerized build completed and artifacts exported to '${install_dir}'"
+    exit 0
+fi
+
 # install each script
 for script in "$script_dir"/scripts/*.cs; do
-    if [[ "$compile_flag" == "--compile" ]]; then
+    if [[ "$compile" == "true" ]]; then
         # precompile the script to a single-file executable
         compiled_path="${script%.cs}"
         dotnet publish "$script" -c Release -o "$install_dir"
