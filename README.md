@@ -131,6 +131,36 @@ echo '  Hello   world  ' | ./normalize.cs --trim --collapse-whitespace
 Hello world
 ```
 
+## term (windows only)
+
+Launches Windows Terminal in a new window while preserving the caller's working directory. The launcher is built as a Windows GUI application so it can be invoked from hotkeys or launchers without first creating a console host.
+
+### Configuration
+
+`term` can be configured through environment variables:
+
+* `TERM_HOME_DIRECTORY`: fallback directory used for neutral launch contexts. Defaults to `%USERPROFILE%`.
+* `TERM_TERMINAL`: terminal executable to launch. Defaults to `wt.exe`.
+* `TERM_NEUTRAL_DIRECTORIES`: `;`-separated list of directories that should fall back to `TERM_HOME_DIRECTORY` instead of being inherited as the starting directory.
+
+The directory containing `term.exe` is always treated as neutral.
+
+Example:
+
+```powershell
+setx TERM_NEUTRAL_DIRECTORIES "%ProgramFiles%\PowerToys"
+```
+
+Usage:
+
+```text
+term
+term .
+term C:\src
+```
+
+With no argument, the current directory is preserved unless it is neutral. `.` always uses the current directory, while an explicit path starts Terminal in that directory.
+
 ## watch
 
 A port of the Unix `watch` utility. Executes a command periodically and displays the output fullscreen, allowing you to observe changes over time.
